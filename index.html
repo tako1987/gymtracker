@@ -33,7 +33,7 @@
             </div>
         </header>
 
-        <!-- 🆕 Daily Quote Section -->
+        <!-- Daily Quote Section -->
         <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-md p-6 mb-6 text-white quote-fade">
             <div class="flex items-center justify-center text-center">
                 <div>
@@ -68,10 +68,18 @@
         <div id="trainingContent" class="tab-content">
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">今日のトレーニングメニュー</h2>
-                    <button onclick="resetToday()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-200">
-                        <i class="fas fa-redo mr-2"></i>リセット
-                    </button>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">今日のトレーニングメニュー</h2>
+                        <p class="text-sm text-gray-500 mt-1">💡 重量は前回の記録から自動設定されます</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="resetWeights()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                            <i class="fas fa-weight-hanging mr-2"></i>重量リセット
+                        </button>
+                        <button onclick="resetToday()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                            <i class="fas fa-redo mr-2"></i>全リセット
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="grid gap-4" id="exerciseList"></div>
@@ -143,7 +151,7 @@
     </div>
 
     <script>
-        // 🆕 Daily Quotes Database
+        // Daily Quotes Database
         const dailyQuotes = [
             { quote: "筋肉は裏切らない。", author: "なかやまきんに君" },
             { quote: "今日の自分は昨日の自分より強くなっている。", author: "トレーニング格言" },
@@ -191,8 +199,14 @@
         // Application state
         let currentWorkout = {};
         let trainingHistory = JSON.parse(localStorage.getItem('trainingHistory')) || {};
+        let lastWeights = JSON.parse(localStorage.getItem('lastWeights')) || {}; // 🆕 重量記憶機能
 
-        // 🆕 Display daily quote
+        // 🆕 Get last used weight or default weight
+        function getInitialWeight(exerciseName, defaultWeight) {
+            return lastWeights[exerciseName] || defaultWeight;
+        }
+
+        // Display daily quote
         function displayDailyQuote() {
             const today = new Date();
             const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
@@ -206,7 +220,7 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             updateCurrentDate();
-            displayDailyQuote(); // 🆕 名言表示を追加
+            displayDailyQuote();
             initializeWorkout();
             renderExercises();
         });
@@ -222,13 +236,14 @@
                 });
         }
 
+        // 🆕 Modified initialization to use last weights
         function initializeWorkout() {
             const today = getToday();
             if (!trainingHistory[today]) {
                 currentWorkout = {};
                 exercises.forEach(exercise => {
                     currentWorkout[exercise.name] = {
-                        weight: exercise.defaultWeight,
+                        weight: getInitialWeight(exercise.name, exercise.defaultWeight), // 🆕 前回の重量を使用
                         sets: [false, false, false],
                         completed: false
                     };
@@ -249,6 +264,7 @@
             exercises.forEach(exercise => {
                 const exerciseData = currentWorkout[exercise.name];
                 const completedSets = exerciseData.sets.filter(Boolean).length;
+                const isLastWeightUsed = lastWeights[exercise.name] && lastWeights[exercise.name] !== exercise.defaultWeight;
                 
                 const exerciseCard = document.createElement('div');
                 exerciseCard.className = `border rounded-lg p-4 ${exerciseData.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`;
@@ -260,6 +276,7 @@
                             <div>
                                 <h3 class="font-semibold text-gray-800">${exercise.name}</h3>
                                 <p class="text-sm text-gray-600">${exercise.bodyPart}</p>
+                                ${isLastWeightUsed ? '<p class="text-xs text-blue-500">📈 前回の重量を使用</p>' : ''}
                             </div>
                         </div>
                         <div class="text-right">
@@ -267,7 +284,7 @@
                                 <input type="number" 
                                        value="${exerciseData.weight}" 
                                        onchange="updateWeight('${exercise.name}', this.value)"
-                                       class="w-16 text-center border rounded px-2 py-1 mr-1">
+                                       class="w-16 text-center border rounded px-2 py-1 mr-1 ${isLastWeightUsed ? 'border-blue-300 bg-blue-50' : ''}">
                                 <span class="text-sm text-gray-600">kg</span>
                             </div>
                             <div class="text-sm text-gray-500">${completedSets}/3 セット完了</div>
@@ -300,9 +317,17 @@
             });
         }
 
+        // 🆕 Modified weight update to save last weights
         function updateWeight(exerciseName, weight) {
-            currentWorkout[exerciseName].weight = parseInt(weight) || 0;
+            const newWeight = parseInt(weight) || 0;
+            currentWorkout[exerciseName].weight = newWeight;
+            
+            // 🆕 Save as last used weight
+            lastWeights[exerciseName] = newWeight;
+            localStorage.setItem('lastWeights', JSON.stringify(lastWeights));
+            
             saveWorkout();
+            renderExercises(); // Re-render to show weight change indicator
         }
 
         function toggleSet(exerciseName, setIndex) {
@@ -320,6 +345,20 @@
             const today = getToday();
             trainingHistory[today] = { ...currentWorkout };
             localStorage.setItem('trainingHistory', JSON.stringify(trainingHistory));
+        }
+
+        // 🆕 Reset weights to default
+        function resetWeights() {
+            if (confirm('すべての重量をデフォルト値にリセットしますか？')) {
+                exercises.forEach(exercise => {
+                    currentWorkout[exercise.name].weight = exercise.defaultWeight;
+                    lastWeights[exercise.name] = exercise.defaultWeight;
+                });
+                localStorage.setItem('lastWeights', JSON.stringify(lastWeights));
+                saveWorkout();
+                renderExercises();
+                alert('重量をデフォルト値にリセットしました！');
+            }
         }
 
         function resetToday() {
@@ -483,6 +522,15 @@
             const ctx = document.getElementById('weightChart').getContext('2d');
             const dates = Object.keys(trainingHistory).sort().slice(-30); // Last 30 days
             
+            if (dates.length === 0) {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.font = '16px Arial';
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'center';
+                ctx.fillText('データがありません', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
+            
             const datasets = exercises.map((exercise, index) => {
                 const colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#06B6D4', '#84CC16'];
                 return {
@@ -528,6 +576,15 @@
             
             const months = Object.keys(monthlyData).sort();
             const counts = months.map(month => monthlyData[month]);
+            
+            if (months.length === 0) {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.font = '16px Arial';
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'center';
+                ctx.fillText('データがありません', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
             
             new Chart(ctx, {
                 type: 'bar',
@@ -583,6 +640,15 @@
                 const stats = bodyPartStats[bodyPart];
                 return stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
             });
+            
+            if (bodyParts.length === 0) {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.font = '16px Arial';
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'center';
+                ctx.fillText('データがありません', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
             
             new Chart(ctx, {
                 type: 'doughnut',
