@@ -7,11 +7,20 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .quote-fade {
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-6">
         <!-- Header -->
-        <header class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <header class="bg-white rounded-lg shadow-md p-6 mb-4">
             <div class="flex justify-between items-center">
                 <h1 class="text-3xl font-bold text-gray-800">
                     <i class="fas fa-dumbbell text-blue-600"></i>
@@ -23,6 +32,22 @@
                 </div>
             </div>
         </header>
+
+        <!-- 🆕 Daily Quote Section -->
+        <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-md p-6 mb-6 text-white quote-fade">
+            <div class="flex items-center justify-center text-center">
+                <div>
+                    <i class="fas fa-quote-left text-2xl mb-3 opacity-70"></i>
+                    <blockquote class="text-lg font-medium mb-2" id="dailyQuote">
+                        <!-- 名言がここに表示されます -->
+                    </blockquote>
+                    <cite class="text-sm opacity-80" id="quoteAuthor">
+                        <!-- 作者がここに表示されます -->
+                    </cite>
+                    <i class="fas fa-quote-right text-2xl mt-3 opacity-70 block"></i>
+                </div>
+            </div>
+        </div>
 
         <!-- Navigation Tabs -->
         <div class="bg-white rounded-lg shadow-md mb-6">
@@ -118,6 +143,40 @@
     </div>
 
     <script>
+        // 🆕 Daily Quotes Database
+        const dailyQuotes = [
+            { quote: "筋肉は裏切らない。", author: "なかやまきんに君" },
+            { quote: "今日の自分は昨日の自分より強くなっている。", author: "トレーニング格言" },
+            { quote: "限界は心の中にだけ存在する。", author: "トレーニング格言" },
+            { quote: "強さは体からではない。不屈の意志から生まれる。", author: "マハトマ・ガンディー" },
+            { quote: "痛みは一時的だが、諦めることは一生の後悔となる。", author: "トレーニング格言" },
+            { quote: "成功とは、情熱を失うことなく失敗から失敗を重ねることである。", author: "ウィンストン・チャーチル" },
+            { quote: "昨日の自分を超えることが、真の勝利だ。", author: "トレーニング格言" },
+            { quote: "筋肉だけでなく、心も鍛えよ。", author: "トレーニング格言" },
+            { quote: "汗は脂肪が泣いている音だ。", author: "トレーニング格言" },
+            { quote: "始めることが最も困難だ。続けることはその次に困難だ。", author: "トレーニング格言" },
+            { quote: "強い人は困難に立ち向かう。最強の人は困難を楽しむ。", author: "トレーニング格言" },
+            { quote: "休息は錆びではない。成長のための準備だ。", author: "トレーニング格言" },
+            { quote: "筋肉は記憶している。今日の努力を明日必ず覚えている。", author: "トレーニング格言" },
+            { quote: "プロテインより大切なのは、続ける意志だ。", author: "トレーニング格言" },
+            { quote: "ジムは第二の家。バーベルは親友。", author: "トレーニング格言" },
+            { quote: "重いものを持ち上げるのではない。自分自身を持ち上げるのだ。", author: "トレーニング格言" },
+            { quote: "筋肉痛は昨日頑張った証拠。", author: "トレーニング格言" },
+            { quote: "理想の体は1日では作れない。だが毎日の積み重ねで必ず作れる。", author: "トレーニング格言" },
+            { quote: "負荷をかけなければ、成長はない。", author: "トレーニング格言" },
+            { quote: "限界だと思った時が、本当のスタートライン。", author: "トレーニング格言" },
+            { quote: "体を変える力は、人生を変える力と同じだ。", author: "トレーニング格言" },
+            { quote: "今日できることを明日に延ばすな。筋肉は待ってくれない。", author: "トレーニング格言" },
+            { quote: "強さは選択だ。毎朝ベッドから起きる時に選ぶものだ。", author: "トレーニング格言" },
+            { quote: "完璧な体型など存在しない。存在するのは完璧な努力だけだ。", author: "トレーニング格言" },
+            { quote: "筋肉は正直だ。嘘をつかない。", author: "トレーニング格言" },
+            { quote: "今日の汗は、明日の自信になる。", author: "トレーニング格言" },
+            { quote: "重量は数字に過ぎない。重要なのは心の重さだ。", author: "トレーニング格言" },
+            { quote: "休む理由を探すより、続ける理由を見つけよう。", author: "トレーニング格言" },
+            { quote: "筋肉は24時間働いている。感謝を忘れずに。", author: "トレーニング格言" },
+            { quote: "強くなりたければ、弱い自分と戦え。", author: "トレーニング格言" }
+        ];
+
         // Exercise data
         const exercises = [
             { name: 'ベンチプレス', bodyPart: '胸', icon: 'fas fa-weight-hanging', defaultWeight: 60 },
@@ -133,9 +192,21 @@
         let currentWorkout = {};
         let trainingHistory = JSON.parse(localStorage.getItem('trainingHistory')) || {};
 
+        // 🆕 Display daily quote
+        function displayDailyQuote() {
+            const today = new Date();
+            const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+            const quoteIndex = dayOfYear % dailyQuotes.length;
+            const todaysQuote = dailyQuotes[quoteIndex];
+            
+            document.getElementById('dailyQuote').textContent = todaysQuote.quote;
+            document.getElementById('quoteAuthor').textContent = `- ${todaysQuote.author}`;
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             updateCurrentDate();
+            displayDailyQuote(); // 🆕 名言表示を追加
             initializeWorkout();
             renderExercises();
         });
