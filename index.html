@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>筋トレ進捗管理アプリ</title>
+    <title>全身法管理アプリ</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -21,15 +21,12 @@
     <div class="container mx-auto px-4 py-6">
         <!-- Header -->
         <header class="bg-white rounded-lg shadow-md p-6 mb-4">
-            <div class="flex justify-between items-center">
-                <h1 class="text-3xl font-bold text-gray-800">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-gray-800 mb-3">
                     <i class="fas fa-dumbbell text-blue-600"></i>
                     全身法管理
                 </h1>
-                <div class="text-right">
-                    <div class="text-lg font-semibold text-gray-700" id="currentDate"></div>
-                    <div class="text-sm text-gray-500">今日のワークアウト</div>
-                </div>
+                <div class="text-lg font-semibold text-gray-700" id="currentDate"></div>
             </div>
         </header>
 
@@ -67,12 +64,12 @@
         <!-- Training Tab -->
         <div id="trainingContent" class="tab-content">
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <div class="flex justify-between items-center mb-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 space-y-3 sm:space-y-0">
                     <div>
                         <h2 class="text-xl font-bold text-gray-800">今日のトレーニングメニュー</h2>
                         <p class="text-sm text-gray-500 mt-1">💡 重量は前回の記録から自動設定されます</p>
                     </div>
-                    <div class="flex space-x-2">
+                    <div class="flex flex-wrap gap-2">
                         <button onclick="resetWeights()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition duration-200">
                             <i class="fas fa-weight-hanging mr-2"></i>重量リセット
                         </button>
@@ -96,8 +93,8 @@
         <div id="historyContent" class="tab-content hidden">
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h2 class="text-xl font-bold text-gray-800 mb-4">トレーニング履歴</h2>
-                <div class="mb-4">
-                    <input type="date" id="historyDate" class="border rounded-lg px-3 py-2 mr-2">
+                <div class="flex flex-col sm:flex-row gap-2 mb-4">
+                    <input type="date" id="historyDate" class="border rounded-lg px-3 py-2 flex-1">
                     <button onclick="showHistoryForDate()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
                         <i class="fas fa-search mr-2"></i>検索
                     </button>
@@ -199,9 +196,9 @@
         // Application state
         let currentWorkout = {};
         let trainingHistory = JSON.parse(localStorage.getItem('trainingHistory')) || {};
-        let lastWeights = JSON.parse(localStorage.getItem('lastWeights')) || {}; // 🆕 重量記憶機能
+        let lastWeights = JSON.parse(localStorage.getItem('lastWeights')) || {};
 
-        // 🆕 Get last used weight or default weight
+        // Get last used weight or default weight
         function getInitialWeight(exerciseName, defaultWeight) {
             return lastWeights[exerciseName] || defaultWeight;
         }
@@ -236,14 +233,14 @@
                 });
         }
 
-        // 🆕 Modified initialization to use last weights
+        // Modified initialization to use last weights
         function initializeWorkout() {
             const today = getToday();
             if (!trainingHistory[today]) {
                 currentWorkout = {};
                 exercises.forEach(exercise => {
                     currentWorkout[exercise.name] = {
-                        weight: getInitialWeight(exercise.name, exercise.defaultWeight), // 🆕 前回の重量を使用
+                        weight: getInitialWeight(exercise.name, exercise.defaultWeight),
                         sets: [false, false, false],
                         completed: false
                     };
@@ -291,10 +288,10 @@
                         </div>
                     </div>
                     
-                    <div class="flex justify-center space-x-4">
+                    <div class="flex justify-center space-x-2 sm:space-x-4">
                         ${exerciseData.sets.map((completed, index) => `
                             <button onclick="toggleSet('${exercise.name}', ${index})"
-                                    class="px-4 py-2 rounded-lg font-medium transition duration-200 ${
+                                    class="px-3 py-2 sm:px-4 rounded-lg font-medium transition duration-200 text-sm sm:text-base ${
                                         completed 
                                             ? 'bg-green-500 text-white' 
                                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -317,17 +314,17 @@
             });
         }
 
-        // 🆕 Modified weight update to save last weights
+        // Modified weight update to save last weights
         function updateWeight(exerciseName, weight) {
             const newWeight = parseInt(weight) || 0;
             currentWorkout[exerciseName].weight = newWeight;
             
-            // 🆕 Save as last used weight
+            // Save as last used weight
             lastWeights[exerciseName] = newWeight;
             localStorage.setItem('lastWeights', JSON.stringify(lastWeights));
             
             saveWorkout();
-            renderExercises(); // Re-render to show weight change indicator
+            renderExercises();
         }
 
         function toggleSet(exerciseName, setIndex) {
@@ -347,7 +344,7 @@
             localStorage.setItem('trainingHistory', JSON.stringify(trainingHistory));
         }
 
-        // 🆕 Reset weights to default
+        // Reset weights to default
         function resetWeights() {
             if (confirm('すべての重量をデフォルト値にリセットしますか？')) {
                 exercises.forEach(exercise => {
